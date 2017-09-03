@@ -1,15 +1,4 @@
-var Player = function(x, y) {
-	this._x = x;
-	this._y = y;
-	this._bullets = 6;
-}
-
-Player.prototype.getX = function() { return this._x; }
-
-Player.prototype.getY = function() { return this._y; }
-
-Player.prototype._draw = function() {
-	Game.display.draw(this._x, this._y, "@", "#ff0");
+var Player = function() {
 }
 
 Player.prototype.act = function() {
@@ -57,10 +46,17 @@ Player.prototype.handleEvent = function(e) {
 	var newX = this._x + diff[0];
 	var newY = this._y + diff[1];
 
-	if (Game.map[newX + "," + newY] !== ".") return;
+	//if (Game.map[newX + "," + newY] !== ".") return;
+	var collides = Game.entities.filter(e => {
+		return e.components.position.x == newX &&
+			e.components.position.y == newY &&
+			e.components.collides;
+	});
+
+	if (collides.length > 0) return;
 
 	// Perform player move
-	Game.display.draw(this._x, this._y, Game.map[this._x + "," + this._y]);
+	//Game.display.draw(this._x, this._y, Game.map[this._x + "," + this._y]);
 	this._x = newX;
 	this._y = newY;
 	this._draw();

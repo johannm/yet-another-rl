@@ -1,68 +1,75 @@
 var Game = {
+
 	display: null,
-	map: {},
-	freeCells: [],
-	player: null,
-	enemy: null,
 	engine: null,
+	entities: [],
 
 	init: function() {
 		this.display = new ROT.Display();
 		document.body.appendChild(this.display.getContainer());
 
 		this._generateMap();
-		this.player = this._generateBeing(Player, this.freeCells);
-		this.enemy = this._generateBeing(Enemy, this.freeCells);
-		this._drawMap();
-		this.player._draw();
-		this.enemy._draw();
-
-		var scheduler = new ROT.Scheduler.Simple();
-		scheduler.add(this.player, true);
-		scheduler.add(this.enemy, true);
-		this.engine = new ROT.Engine(scheduler);
-		this.engine.start();
+		var playerEntity = this._generatePlayer()
+		Game.entities.push(playerEntity);
+		var enemyEntity = this._generateEnemy()
+		Game.entities.push(enemyEntity);
 		
+		var scheduler = new ROT.Scheduler.Simple();
+		scheduler.add({act: Systems.render}, true);
+		scheduler.add({act: Systems.getInput}, true);
+		
+		this.engine = new ROT.Engine(scheduler)
+		this.engine.start();
 	},
 
 	_generateMap: function() {
 		var digger = new ROT.Map.Digger();
 		
-
 		var digCallback = function(x, y, wall) {
-			var key = x + "," + y;
-			if (wall)
-				this.map[key] = "#";
-			else {
-				this.map[key] = ".";
-				this.freeCells.push(key);
+			var entity = new Game.Entity();
+			entity.addComponent(new Components.Position({x: x, y: y}));
+			if (wall) {
+				entity.addComponent(new Components.Apperance({glyph: "#", color: "#aaa"}));
+				entity.addComponent(new Components.Collides());
 			}
+			else {
+				entity.addComponent(new Components.Apperance({glyph: ".", color: "#fff"}));
+			}
+			this.entities.push(entity);
 		}
 		digger.create(digCallback.bind(this));
 	},
 
-	_drawMap: function() {
-		for(var key in this.map) {
-			var parts = key.split(",");
-			var x = parseInt(parts[0]);
-			var y = parseInt(parts[1]);
-			this.display.draw(x, y, this.map[key]);
-		}
+	_generatePlayer: function() {
+		var freeEntities = this.entities.filter(function(e) {
+			if (typeof e.components === 'undefined') console.log("error", e);
+			return !e.components.collides;
+		});
+		var index = Math.floor(ROT.RNG.getUniform() * freeEntities.length);
+		var newPosition = freeEntities[index].components.position;
+
+		var entity = new Game.Entity();
+		entity.addComponent(new Components.Apperance({glyph: "@", color: "#ff0"}));
+		entity.addComponent(new Components.Position({x: newPosition.x, y: newPosition.y}));
+		entity.addComponent(new Components.Collides);
+		entity.addComponent(new Components.Player);
+
+		return entity;
 	},
 
-	_generateBeing: function(what, freeCells) {
-		var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
-        var key = freeCells.splice(index, 1)[0];
-        var x = parseInt(key.split(",")[0]);
-		var y = parseInt(key.split(",")[1]);
-		return new what(x, y);
-	},
+	_generateEnemy: function() {
+		var freeEntities = this.entities.filter(function(e) {
+			if (typeof e.components === 'undefined') console.log("error", e);
+			return !e.components.collides;
+		});
+		var index = Math.floor(ROT.RNG.getUniform() * freeEntities.length);
+		var newPosition = freeEntities[index].components.position;
 
-	dist(x1, y1, x2, y2) {
-		var a = x2 - x1;
-		var b = y2 - y1;
-		return Math.sqrt(a * a + b * b);
-	}
+		var entity = new Game.Entity();
+		entity.addComponent(new Components.Apperance({glyph: "g", color: "#f00"}));
+		entity.addComponent(new Components.Position({x: newPosition.x, y: newPosition.y}));
+		entity.addComponent(new Components.Collides);
+
+		return entity;
+	},
 };
-
-Game.init();
