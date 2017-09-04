@@ -2,18 +2,21 @@ var Systems = {};
 
 Systems.render = function() {
 	Game.display.clear();
-	for (var key in Game.map) {
-		var x = parseInt(key.split(",")[0]);
-		var y = parseInt(key.split(",")[1]);
-		Game.display.draw(x, y, Game.map[key].glyph, Game.map[key].color);
-	}
-	Game.entities.forEach(e => {
-		if (e.components.apperance && e.components.position) {
-			Game.display.draw(e.components.position.x,
-							e.components.position.y,
-							e.components.apperance.glyph,
-							e.components.apperance.color);
-		}
+
+	_.each(Game.map, (tile, key) => {
+		var pos = Game.keyToPos(key);
+		Game.display.draw(pos.x, pos.y, tile.glyph, tile.color);
+	});
+
+	_(Game.entities)
+	.filter(e => e.components.apperance && e.components.position)
+	.each(e => {
+		Game.display.draw(
+			e.components.position.x,
+			e.components.position.y,
+			e.components.apperance.glyph,
+			e.components.apperance.color
+		);
 	});
 }
 
@@ -24,9 +27,6 @@ Systems.getInput = function() {
 }
 
 Systems.handleInput = function(event) {
-	var playerEntityIndex = Game.entities.findIndex(e => {
-		return e.components.player;
-	});
 	var code = event.keyCode;
 
 	var keyMap = {};
@@ -42,54 +42,48 @@ Systems.handleInput = function(event) {
 	if (!(code in keyMap)) return;
 
 	var diff = ROT.DIRS[8][keyMap[code]];
-	var newX = Game.entities[playerEntityIndex].components.position.x + diff[0];
-	var newY = Game.entities[playerEntityIndex].components.position.y + diff[1];
+	var player = Game.entities[Game.entities]
+	var newX = Game.getPlayer().components.position.x + diff[0];
+	var newY = Game.getPlayer().components.position.y + diff[1];
 
-	var collides = Game.entities.filter(e => {
-		return e.components.position.x === newX &&
-			e.components.position.y === newY &&
-			e.components.collides;
-	});
+	var collides = _.filter(Game.entities, e => 
+		e.components.position.x === newX 
+			&& e.components.position.y === newY 
+			&& e.components.collides);
 
 	if (collides.length > 0) return;
 
 	if (Game.map[newX + "," + newY].glyph === "#") return;
 
 	// Perform player move
-	Game.entities[playerEntityIndex].components.position.x = newX;
-	Game.entities[playerEntityIndex].components.position.y = newY;
+	Game.entities[Game.playerId].components.position.x = newX;
+	Game.entities[Game.playerId].components.position.y = newY;
 	window.removeEventListener("keydown", this);
 	Game.engine.unlock();
 }
 
 Systems.processEnemy = function() {
-	Game.entities.forEach(function(entity, i) {
-		if (!entity.components.enemy)
-			return;
-
-		var player = Game.entities.find(e => {
-			return e.components.player;
-		});
-		var targetX = player.components.position.x;
-		var targetY = player.components.position.y;
-		var passableCallback = function(x, y) {
-			return Game.map[x + "," + y].glyph === ".";
-		}
+	_(Game.entities)
+	.filter(e => e.components.enemy)
+	.forEach(e => {
+		var targetX = Game.getPlayer().components.position.x
+		var targetY = Game.getPlayer().components.position.y;
+		
+		var passableCallback = (x, y) => Game.map[x + "," + y].glyph === ".";		
 		var astar = new ROT.Path.AStar(targetX, targetY, passableCallback, {topology:8});
 
 		var path = [];
-		var pathCallback = function(x, y) {
-			path.push([x, y]);
-		}
-		astar.compute(entity.components.position.x, entity.components.position.y, pathCallback);
+		var pathCallback = (x, y) => path.push([x, y]);
+		astar.compute(e.components.position.x, e.components.position.y, pathCallback);
 
+		var newX = path[1][0]
+		var newY = path[1][1];
 		if (path.length > 2) {
-			var newX, newY;
-			[newX, newY] = path[1];
-			Game.entities[i].components.position.x = newX;
-			Game.entities[i].components.position.y = newY;
+			Game.entities[e.id].components.position.x = newX;
+			Game.entities[e.id].components.position.y = newY;
 		} else {
-			if ([newX, newY] === [targetX, targetY]) {
+			console.log("path length", path.length);
+			if (newX === targetX && newY === targetY) {
 				Game.engine.lock();
 				alert("Game Over");
 			}

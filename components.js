@@ -14,16 +14,13 @@ Components.Position = function(params) {
 };
 Components.Position.prototype.name = 'position';
 
-Components.Collides = function() {
-};
+Components.Collides = function() {};
 Components.Collides.prototype.name = 'collides';
 
-Components.Player = function() {
-};
+Components.Player = function() {};
 Components.Player.prototype.name = 'player';
 
-Components.Enemy = function() {
-};
+Components.Enemy = function() {};
 Components.Enemy.prototype.name = 'enemy';
 
 Components.Apperance = function(params) {
