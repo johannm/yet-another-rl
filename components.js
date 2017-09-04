@@ -22,17 +22,14 @@ Components.Player = function() {
 };
 Components.Player.prototype.name = 'player';
 
+Components.Enemy = function() {
+};
+Components.Enemy.prototype.name = 'enemy';
+
 Components.Apperance = function(params) {
 	params = params || {};
 	this.glyph = params.glyph || '#';
 	this.color = params.color || '#ff0';
-	/*if (!this.color) {
-		this.color = {
-			r: 255,
-			g: 255,
-			w: 255
-		}
-	}*/
 };
 Components.Apperance.prototype.name = 'apperance';
 
