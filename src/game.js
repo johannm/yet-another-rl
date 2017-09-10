@@ -57,6 +57,7 @@ var Game = {
 		entity.addComponent(new Components.Position(this.keyToPos(key)));
 		entity.addComponent(new Components.Collides);
 		entity.addComponent(new Components.Player);
+		entity.addComponent(new Components.Health(20));
 
 		return entity;
 	},
@@ -69,6 +70,7 @@ var Game = {
 		entity.addComponent(new Components.Position(this.keyToPos(key)));
 		entity.addComponent(new Components.Collides);
 		entity.addComponent(new Components.Enemy);
+		entity.addComponent(new Components.Health(5));
 
 		return entity;
 	},

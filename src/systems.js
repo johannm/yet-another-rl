@@ -29,6 +29,11 @@ Systems.getInput = function() {
 Systems.handleInput = function(event) {
 	var code = event.keyCode;
 
+	if (code === ROT.VK_PERIOD) {
+		window.removeEventListener("keydown", this);
+		Game.engine.unlock();
+	}
+
 	var keyMap = {};
 	keyMap[ROT.VK_K] = 0;
 	keyMap[ROT.VK_U] = 1;
@@ -46,18 +51,31 @@ Systems.handleInput = function(event) {
 	var newX = Game.getPlayer().components.position.x + diff[0];
 	var newY = Game.getPlayer().components.position.y + diff[1];
 
+	// Don't walk into walls
+	if (Game.map[newX + "," + newY].glyph === "#") return;
+
 	var collides = _.filter(Game.entities, e => 
 		e.components.position.x === newX 
 			&& e.components.position.y === newY 
 			&& e.components.collides);
 
-	if (collides.length > 0) return;
+	if (_.isEmpty(collides)) {
+		// Perform player move
+		Game.entities[Game.playerId].components.position.x = newX;
+		Game.entities[Game.playerId].components.position.y = newY;	
+	} else {
+		var enemy = _.find(collides, e => e.components.enemy);
+		if (enemy) {
+			var hp = Game.entities[enemy.id].components.health.value--;
+			console.log("player hits", enemy);
+			console.log("enemy health", hp);
+			if (hp < 1) {
+				console.log("enemy killed");
+				delete Game.entities[enemy.id];
+			}
+		}
+	}
 
-	if (Game.map[newX + "," + newY].glyph === "#") return;
-
-	// Perform player move
-	Game.entities[Game.playerId].components.position.x = newX;
-	Game.entities[Game.playerId].components.position.y = newY;
 	window.removeEventListener("keydown", this);
 	Game.engine.unlock();
 }
@@ -82,10 +100,14 @@ Systems.processEnemy = function() {
 			Game.entities[e.id].components.position.x = newX;
 			Game.entities[e.id].components.position.y = newY;
 		} else {
-			console.log("path length", path.length);
 			if (newX === targetX && newY === targetY) {
-				Game.engine.lock();
-				alert("Game Over");
+				console.log("enemy hits");
+				var hp = Game.entities[Game.playerId].components.health.value--;
+				console.log("player health", hp);
+				if (hp < 1) {
+					console.log("You were killed!");
+					Game.engine.lock();
+				}
 			}
 		}
 	});
