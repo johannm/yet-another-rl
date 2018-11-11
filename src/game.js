@@ -1,3 +1,5 @@
+var Systems = {};
+
 var Game = {
 
 	display: null,
@@ -8,7 +10,7 @@ var Game = {
 	playerId: null,
 
 	init: function() {
-		this.display = new ROT.Display();
+		this.display = new ROT.Display({width: 95, height: 25});
 		document.body.appendChild(this.display.getContainer());
 
 		this._generateMap();
@@ -16,9 +18,11 @@ var Game = {
 		var player = this._generatePlayer()
 		this.entities[player.id] = player;
 		this.playerId = player.id;
-		var enemy = this._generateEnemy()
-		this.entities[enemy.id] = enemy;
-		
+		for (var i = 0; i < 3; i++) {
+			var enemy = this._generateEnemy()
+			this.entities[enemy.id] = enemy;
+		}
+
 		var scheduler = new ROT.Scheduler.Simple();
 		scheduler.add({act: Systems.render}, true);
 		scheduler.add({act: Systems.getInput}, true);
